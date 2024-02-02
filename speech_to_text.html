@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>WebSocket Speech Recognition</title>
+  </head>
+  <body>
+    <h1>Speech Recognition Bahasa Indonesia</h1>
+    <button id="startRecognitionButton">Start</button>
+    <button id="stopRecognitionButton">Finish</button>
+    <div id="teksAwal"></div>
+    <p>Teks:</p>
+    <div id="resultContainer"></div>
+    <script>
+      let socket;
+      let textList = [];
+      let recognitionActive = false;
+      // let recognitionStop = false;
+
+      const startRecognition = () => {
+        if (recognitionActive) {
+          console.log("Recognition is already active.");
+          return;
+        }
+
+        recognitionActive = true;
+
+        const restartRecognition = () => {
+          if (recognitionActive) {
+            socket = new WebSocket("ws://localhost:8000/ws");
+
+            socket.addEventListener("open", (event) => {
+              console.log("WebSocket connection opened");
+              document.getElementById("teksAwal").innerHTML =
+                "Katakan Sesuatu!";
+            });
+
+            socket.addEventListener("message", (event) => {
+              const recognizedText = event.data;
+              console.log("Recognized text: " + recognizedText);
+              const resultContainer =
+                document.getElementById("resultContainer");
+              resultContainer.innerHTML += recognizedText + ". ";
+              textList.push(recognizedText);
+            });
+
+            // recognitionStop = true;
+            socket.addEventListener("close", () => {
+              console.log("WebSocket connection closed");
+              if (recognitionActive) {
+                restartRecognition();
+              }
+            });
+          }
+        };
+
+        restartRecognition();
+      };
+
+      const stopRecognition = () => {
+        if (socket) {
+          socket.close();
+          recognitionActive = false;
+          recognition = false;
+          console.log("WebSocket connection closed");
+          document.getElementById("teksAwal").innerHTML = "Selesai";
+          document.getElementById("resultContainer").innerHTML = "";
+        }
+      };
+
+      document
+        .getElementById("startRecognitionButton")
+        .addEventListener("click", startRecognition);
+      document
+        .getElementById("stopRecognitionButton")
+        .addEventListener("click", stopRecognition);
+    </script>
+  </body>
+</html>
